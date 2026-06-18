@@ -9,6 +9,7 @@ results/screenshots/logs back to the volume, updates state, and optionally loops
 from __future__ import annotations
 
 import csv
+import base64
 import json
 import os
 import shutil
@@ -18,6 +19,7 @@ import time
 from datetime import datetime, timezone
 from pathlib import Path
 from urllib.parse import urlparse
+from urllib.request import Request, urlopen
 
 
 APP_ROOT = Path("/app")
@@ -63,6 +65,35 @@ def write_csv(path: Path, rows: list[dict[str, object]], fieldnames: list[str] |
         writer = csv.DictWriter(f, fieldnames=fieldnames, extrasaction="ignore")
         writer.writeheader()
         writer.writerows(rows)
+
+
+def ensure_source_csv(path: Path) -> None:
+    """Create the queue CSV from env when a mounted file is not available."""
+    if path.exists():
+        return
+
+    path.parent.mkdir(parents=True, exist_ok=True)
+    queue_b64 = os.environ.get("QUEUE_CSV_B64", "").strip()
+    queue_text = os.environ.get("QUEUE_CSV_TEXT", "").strip()
+    queue_url = os.environ.get("QUEUE_CSV_URL", "").strip()
+
+    if queue_b64:
+        path.write_bytes(base64.b64decode(queue_b64))
+        return
+
+    if queue_text:
+        path.write_text(queue_text, encoding="utf-8")
+        return
+
+    if queue_url:
+        request = Request(queue_url, headers={"User-Agent": "website-submission-agent/1.0"})
+        with urlopen(request, timeout=60) as response:
+            path.write_bytes(response.read())
+        return
+
+    raise FileNotFoundError(
+        f"Source queue not found: {path}. Provide SOURCE_CSV on /data, QUEUE_CSV_B64, QUEUE_CSV_TEXT, or QUEUE_CSV_URL."
+    )
 
 
 def load_state(path: Path) -> dict[str, object]:
@@ -176,8 +207,7 @@ def run_once() -> dict[str, object]:
     state_file = Path(os.environ.get("STATE_FILE", "/data/state/mobile-home-worker-state.json"))
     limit = int(os.environ.get("BATCH_LIMIT", "25"))
 
-    if not source_csv.exists():
-        raise FileNotFoundError(f"Source queue not found: {source_csv}")
+    ensure_source_csv(source_csv)
     if not os.environ.get("SENDER_NAME") or not os.environ.get("SENDER_EMAIL"):
         raise RuntimeError("SENDER_NAME and SENDER_EMAIL are required")
 

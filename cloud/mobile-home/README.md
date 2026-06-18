@@ -195,9 +195,14 @@ Files:
 
    `/data`
 
-4. Upload the queue CSV into the persistent storage:
+4. Provide the queue CSV in one of three ways:
 
-   `/data/input/mobile-home-strict-form-submission-queue.csv`
+   - upload it into persistent storage at `/data/input/mobile-home-strict-form-submission-queue.csv`
+   - set `QUEUE_CSV_B64` to a base64-encoded CSV
+   - set `QUEUE_CSV_URL` to a direct-download CSV URL
+
+   The mounted file is best for long overnight runs. `QUEUE_CSV_B64` is easiest
+   for a one-row cloud smoke test.
 
 5. Add environment variables in Coolify:
 
@@ -206,6 +211,8 @@ RUN_MODE=loop
 BATCH_LIMIT=25
 LOOP_SLEEP_SECONDS=300
 SOURCE_CSV=/data/input/mobile-home-strict-form-submission-queue.csv
+QUEUE_CSV_B64=
+QUEUE_CSV_URL=
 RESULTS_ROOT=/data/runs
 STATE_FILE=/data/state/mobile-home-worker-state.json
 SENDER_NAME=...

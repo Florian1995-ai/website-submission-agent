@@ -6,6 +6,9 @@ services:
     environment:
       RUN_MODE: "loop"
       SOURCE_CSV: "/data/input/mobile-home-strict-form-submission-queue.csv"
+      QUEUE_CSV_B64: ""
+      QUEUE_CSV_TEXT: ""
+      QUEUE_CSV_URL: ""
       RESULTS_ROOT: "/data/runs"
       STATE_FILE: "/data/state/mobile-home-worker-state.json"
       BATCH_LIMIT: "25"
