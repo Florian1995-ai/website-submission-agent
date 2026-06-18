@@ -168,3 +168,84 @@ Then pass already-attempted domains into `skip_domains`.
 - The cloud runner uses Chromium, not local Chrome.
 - Public lead scraping and form submission should remain separate stages:
   first build/clean the queue, then submit.
+
+## Coolify / Hostinger Overnight Worker
+
+If Modal deploy is blocked from the local agent environment, use the Docker
+worker in this folder. This is often the simplest overnight setup because
+Coolify owns the runtime and the local machine can sleep.
+
+Files:
+
+- `cloud/mobile-home/Dockerfile`
+- `cloud/mobile-home/docker-compose.yml`
+- `cloud/mobile-home/run_cloud_worker.py`
+
+### Coolify Setup
+
+1. Create a new Coolify project from the GitHub repo:
+
+   `https://github.com/Florian1995-ai/website-submission-agent`
+
+2. Use Docker Compose mode and point to:
+
+   `cloud/mobile-home/docker-compose.yml`
+
+3. Add persistent storage mounted at:
+
+   `/data`
+
+4. Upload the queue CSV into the persistent storage:
+
+   `/data/input/mobile-home-strict-form-submission-queue.csv`
+
+5. Add environment variables in Coolify:
+
+```text
+RUN_MODE=loop
+BATCH_LIMIT=25
+LOOP_SLEEP_SECONDS=300
+SOURCE_CSV=/data/input/mobile-home-strict-form-submission-queue.csv
+RESULTS_ROOT=/data/runs
+STATE_FILE=/data/state/mobile-home-worker-state.json
+SENDER_NAME=...
+SENDER_EMAIL=...
+SENDER_PHONE=...
+SENDER_ADDRESS=1455 Clearview Drive
+SENDER_CITY=McKinney
+SENDER_STATE=TX
+SENDER_POSTAL_CODE=75072
+SUBJECT=Michigan mobile home case study
+CAPSOLVER_API_KEY=...
+DRY_RUN=true
+REVIEW_BEFORE_SUBMIT=true
+```
+
+6. First deploy/test with:
+
+```text
+BATCH_LIMIT=1
+DRY_RUN=true
+REVIEW_BEFORE_SUBMIT=true
+```
+
+7. After the first screenshot/result appears under `/data/runs`, switch to:
+
+```text
+BATCH_LIMIT=25
+DRY_RUN=false
+REVIEW_BEFORE_SUBMIT=false
+RUN_MODE=loop
+```
+
+### Worker Behavior
+
+Each loop:
+
+- reads the queue CSV
+- skips domains already in `/data/state/mobile-home-worker-state.json`
+- writes the current batch to `/data/runs/<run_id>/input.csv`
+- runs the Playwright form-submission agent headlessly
+- writes `/data/runs/<run_id>/results.csv`
+- copies screenshots/logs into `/data/runs/<run_id>/`
+- updates state so the next loop continues where it left off

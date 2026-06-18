@@ -1,0 +1,29 @@
+services:
+  mobile-home-submission-agent:
+    build:
+      context: ../..
+      dockerfile: cloud/mobile-home/Dockerfile
+    environment:
+      RUN_MODE: "loop"
+      SOURCE_CSV: "/data/input/mobile-home-strict-form-submission-queue.csv"
+      RESULTS_ROOT: "/data/runs"
+      STATE_FILE: "/data/state/mobile-home-worker-state.json"
+      BATCH_LIMIT: "25"
+      LOOP_SLEEP_SECONDS: "300"
+      SENDER_NAME: ""
+      SENDER_EMAIL: ""
+      SENDER_PHONE: ""
+      SENDER_ADDRESS: "1455 Clearview Drive"
+      SENDER_CITY: "McKinney"
+      SENDER_STATE: "TX"
+      SENDER_POSTAL_CODE: "75072"
+      SUBJECT: "Michigan mobile home case study"
+      DRY_RUN: "false"
+      REVIEW_BEFORE_SUBMIT: "false"
+      CAPSOLVER_API_KEY: ""
+    volumes:
+      - mobile-home-submission-data:/data
+    restart: unless-stopped
+
+volumes:
+  mobile-home-submission-data:
