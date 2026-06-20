@@ -98,3 +98,13 @@ For a new client without a hardcoded template, use:
 ```
 
 The message should be approved before live submission.
+
+## Fast Intake Helper
+
+For the dream workflow - "this message, this sender, this phone, this list" - use:
+
+`execution/setup_website_submission_campaign.py`
+
+It creates a complete package under `.tmp/campaign-setups/` with `campaign.json`, `CAMPAIGN_CONFIG_B64.txt`, `coolify-env.txt`, the copied queue CSV, and a setup README. See:
+
+`docs/new-website-submission-campaign-intake.md`
