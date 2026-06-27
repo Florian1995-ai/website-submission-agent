@@ -219,6 +219,31 @@ def load_and_apply_campaign_config() -> None:
         )
 
 
+def apply_mobile_home_resume_override() -> None:
+    """Keep the production mobile-home service on the approved resume point.
+
+    Coolify may still have an older CAMPAIGN_CONFIG_B64 set for this service.
+    That config points at an exhausted state file, so force the known live
+    resume settings after config load without touching secrets.
+    """
+    if os.environ.get("CAMPAIGN_NAME", "mobile-home").strip().lower() != "mobile-home":
+        return
+    if env_bool("DISABLE_MOBILE_HOME_RESUME_OVERRIDE", False):
+        return
+    os.environ["SOURCE_CSV"] = "/data/input/mobile-home-full-queue.csv"
+    os.environ["QUEUE_SKIP_ROWS"] = "6426"
+    os.environ["STATE_FILE"] = "/data/state/mobile-home-resume-after-6426-state.json"
+    os.environ["RUN_MODE"] = "loop"
+    os.environ["DRY_RUN"] = "false"
+    os.environ["REVIEW_BEFORE_SUBMIT"] = "false"
+    log_event(
+        "mobile_home_resume_override_applied",
+        source_csv=os.environ["SOURCE_CSV"],
+        queue_skip_rows=os.environ["QUEUE_SKIP_ROWS"],
+        state_file=os.environ["STATE_FILE"],
+    )
+
+
 def normalize_domain(url: str | None) -> str:
     raw = str(url or "").strip()
     if not raw:
@@ -649,6 +674,7 @@ def start_status_server() -> None:
 
 def main() -> int:
     load_and_apply_campaign_config()
+    apply_mobile_home_resume_override()
     start_status_server()
     mode = os.environ.get("RUN_MODE", "once").strip().lower()
     sleep_seconds = int(os.environ.get("LOOP_SLEEP_SECONDS", "300"))
