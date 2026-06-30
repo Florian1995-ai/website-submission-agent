@@ -203,6 +203,17 @@ def generate_exact_charley_hayden_message(lead):
     )
 
 
+def generate_charley_round2_message(lead):
+    company = lead_value(lead, "company_name", "company", "name", default="[Company Name]")
+    return (
+        f"Hello {company},\n\n"
+        "We’re a local mitigation company based right here in Greater Houston, and we’re looking to partner with a few more plumbing companies that want to create additional revenue streams from the service calls they’re already running.\n\n"
+        "For the past several years, we’ve quietly worked alongside some of Houston’s leading plumbing companies, providing mitigation services when water damage is identified during a service call. These partnerships help plumbers create additional revenue streams while ensuring their customers receive immediate, professional support.\n\n"
+        "We’re now looking to expand our partnership network and connect with a few more plumbing companies throughout Greater Houston.\n\n"
+        "Since we’re local, I’d love to swing by with a coffee and introduce myself in person — no pressure, just five minutes to see if there’s a good fit. Or if it’s easier, would you be available for a quick 10-minute call next week?"
+    )
+
+
 def infer_niche(lead):
     text = " ".join([
         lead_value(lead, "niche", "categoryName"),
@@ -2794,6 +2805,8 @@ async def main():
     parser.add_argument("--exact-charley-hayden-template", action="store_true",
                         help="Use Charley Hayden's exact Greater Houston mitigation partnership template, changing only the company name")
     parser.add_argument("--exact-vincent-template", action="store_true", help=argparse.SUPPRESS)
+    parser.add_argument("--charley-round2-template", action="store_true",
+                        help="Use Charley Hayden's round-2 message (round-1 wording + local + in-person coffee), changing only the company name")
     parser.add_argument("--company", default="", help="Company name for the target")
     parser.add_argument("--target-company", default="", help="Alias for --company")
     parser.add_argument("--location", default="", help="Target location, e.g. Sugar Land, TX")
@@ -2893,6 +2906,8 @@ async def main():
 
             if args.exact_mobile_home_template:
                 msg = generate_exact_case_study_message(lead)
+            elif args.charley_round2_template:
+                msg = generate_charley_round2_message(lead)
             elif args.exact_charley_hayden_template or args.exact_vincent_template:
                 msg = generate_exact_charley_hayden_message(lead)
 
